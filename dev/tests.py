@@ -83,7 +83,8 @@ class CheckModelStatusClass(unittest.TestCase):
 
     @patch('app.gen_model_task_unique_id')
     @patch('app.r_conn')
-    def test_checkmodel_calls_dependencies_modelnoexists(self,mock_conn, mock_gen_modelid):
+    @patch('app.check_task')
+    def test_checkmodel_calls_dependencies_modelnoexists(self,mock_checktask, mock_conn, mock_gen_modelid):
         mock_gen_modelid.return_value = None
         mock_conn.get.return_value = None
 
@@ -92,13 +93,13 @@ class CheckModelStatusClass(unittest.TestCase):
         mock_gen_modelid.assert_called_with('test_model_id')
         self.assertFalse(mock_checktask.called, "Failed to not call check_task when model_id not present in redis")
 
-from app import train_model
+from app import train_model_endpoint
 class TrainModelClass(unittest.TestCase):
     @patch('app.get_request_data')
     @patch('app.gen_model_unique_id')
     def test_trainmodel_calls_dependencies_nodata(self, mock_genid, mock_requestdata):
-        train_model()
         mock_requestdata.return_value = 'no data here'
+        train_model_endpoint()
 
         mock_requestdata.assert_called_with()
         self.assertFalse(mock_genid.called, "Train model expects request data to be in byte form, else it assumes non-valid data was passed")
@@ -157,7 +158,7 @@ class AppFunctionalClass(unittest.TestCase):
         self.assertEqual(response.data.decode('utf-8'), "model found and trained")
         self.assertEqual(response.status_code, 200)
 
-    def test_trainmodel_415_baddata(self):
+    def test_trainmodelendpoint_415_baddata(self):
         response = self.client.post('/train', content_type = 'not text', data = "['stuff']")
         self.assertEqual(response.status_code, 415)
         self.assertEqual(response.data.decode('utf-8'), 'Please post data in csv format, and make sure the label column is the last column in the csv.')
@@ -166,19 +167,7 @@ class AppFunctionalClass(unittest.TestCase):
     @patch('app.celery')
     @patch('app.r_conn')
     @patch('app.gen_model_unique_id')
-    def test_trainmodel_415(self, mock_genid, mock_conn, mock_celery, mock_requestdata):
-        mock_requestdata.return_value = 'bad data'
-
-        response = self.client.post('/train', content_type = 'not text', data = "bad data")
-
-        self.assertEqual(mock_genid.called, True)
-        mock_celery.send_task.assert_called_with('tasks.train', args = ['model_id', b'good data'], kwargs = {})
-
-    @patch('app.get_request_data')
-    @patch('app.celery')
-    @patch('app.r_conn')
-    @patch('app.gen_model_unique_id')
-    def test_trainmodel_200(self, mock_genid, mock_conn, mock_celery, mock_requestdata):
+    def test_trainmodelendpoint_200(self, mock_genid, mock_conn, mock_celery, mock_requestdata):
         mock_requestdata.return_value = b'good data'
         mock_genid.return_value = "model_id"
         mock_celery.send_task.return_value.id = 'task_id'

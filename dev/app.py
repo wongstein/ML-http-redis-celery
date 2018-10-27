@@ -29,7 +29,7 @@ r_conn = redis.Redis('localhost')
 
 #Expecting data to come in byte-string
 @celery.task(name='tasks.train')
-def train_model(model_id, data):
+def celery_train_model(model_id, data):
     data_df = bytes_to_df(data)
 
     target = data_df.iloc[:, -1]
@@ -80,9 +80,9 @@ def check_model_status(model_id):
 
 
 @app.route('/train', methods = ['POST'])
-def train_model():
+def train_model_endpoint():
     data = get_request_data()
-    print(data)
+
     if type(data) == type('string'):
         return flask.Response(response = data,
                               status = 415,
