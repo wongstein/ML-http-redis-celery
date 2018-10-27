@@ -92,8 +92,8 @@ def train_model_endpoint():
     task = celery.send_task('tasks.train', args = [model_id, data], kwargs={})
 
     #save task id to model id
-    task_model_key = gen_model_task_unique_id(model_id)
-    r_conn.set(task_model_key, task.id)
+    model_task_key = gen_model_task_unique_id(model_id)
+    r_conn.set(model_task_key, task.id)
 
     response_message = "You're model is being trained right now, you can check it's status by hitting the check_task endpoint"
     response = { 'message': response_message,
@@ -105,7 +105,7 @@ def train_model_endpoint():
 
 #expecting
 #added post to route for easy testing in PostMan
-@app.route('/predict/<string:model_id>', methods = ['GET', 'POST'])
+@app.route('/predict/<string:model_id>', methods = ['GET'])
 def predict(model_id):
     #find model
     model_s = r_conn.get(model_id)
@@ -133,7 +133,7 @@ def predict(model_id):
         to_return['prediction_probability'] = model.predict_proba(predict_data).tolist()
     except AttributeError:
         pass
-
+    print(to_return)
     return flask.Response(response = json.dumps(to_return),
                           status = 200,
                           mimetype = 'text/plain')
