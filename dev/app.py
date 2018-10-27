@@ -1,12 +1,10 @@
-import os
-import random
-import time
-from flask import Flask, request, url_for
-from celery import Celery
 import flask
+from flask import Flask, url_for
+from celery import Celery
+import celery.states as states
+
 from io import StringIO
 import json
-import celery.states as states
 
 import pickle
 import pandas as pd
@@ -84,9 +82,11 @@ def check_model_status(model_id):
 @app.route('/train', methods = ['POST'])
 def train_model():
     data = get_request_data()
-
-    if type(data) == type(flask.Response()):
-        return data
+    print(data)
+    if type(data) == type('string'):
+        return flask.Response(response = data,
+                              status = 415,
+                              mimetype = 'text/plain')
 
     model_id = gen_model_unique_id()
     task = celery.send_task('tasks.train', args = [model_id, data], kwargs={})
@@ -119,8 +119,10 @@ def predict(model_id):
 
     #make predictions
     predict_data_b = get_request_data()
-    if type(predict_data_b) == type(flask.Response()):
-        return predict_data_b
+    if type(predict_data_b) == type('string'):
+        return flask.Response(response = predict_data_b,
+                          status = 415,
+                          mimetype = 'text/plain')
 
     predict_data = bytes_to_df(predict_data_b)
     predict_data = preprocess_data(predict_data)
@@ -141,19 +143,14 @@ def predict(model_id):
 def get_request_data():
 
     if flask.request.content_type == 'text/csv':
-        data = flask.request.data.decode('utf-8') # check
-        return data
+        return flask.request.data
 
     if flask.request.method == 'POST': #training expects label in final column
-        response_message = 'Please post data in csv format, and make sure the label column is the last column in the csv.'
-    else:
-        response_message = 'Please post data in csv format.'
-    return flask.Response(response = response_message,
-                          status = 415,
-                          mimetype = 'text/plain')
+        return 'Please post data in csv format, and make sure the label column is the last column in the csv.'
+    return 'Please post data in csv format.'
 
 def bytes_to_df(data_b):
-    data_s = StringIO(data_b)
+    data_s = StringIO(data_b.decode('utf-8'))
     data_df = pd.read_csv(data_s, header = None)
 
     return data_df
