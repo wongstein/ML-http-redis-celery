@@ -133,7 +133,7 @@ def predict(model_id):
         to_return['prediction_probability'] = model.predict_proba(predict_data).tolist()
     except AttributeError:
         pass
-    print(to_return)
+
     return flask.Response(response = json.dumps(to_return),
                           status = 200,
                           mimetype = 'text/plain')
@@ -141,7 +141,6 @@ def predict(model_id):
 ################### Smaller Helper Functions with no Business Logic ########################
 
 def get_request_data():
-
     if flask.request.content_type == 'text/csv':
         return flask.request.data
 

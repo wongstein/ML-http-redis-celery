@@ -15,7 +15,7 @@ class gen_model_unique_id_test(unittest.TestCase):
 from helpers import gen_model_task_unique_id
 class gen_model_task_unique_id_test(unittest.TestCase):
     def test_gen_unique_id_correct(self):
-        expectation = 'model_20181001-000000_taskid'
+        expectation = 'model_20181001-000000_task'
         model_id = 'model_20181001-000000'
         self.assertEqual(gen_model_task_unique_id(model_id), expectation)
 
@@ -54,12 +54,11 @@ class GetRequestDataClass(unittest.TestCase):
 
 from app import bytes_to_df
 class BytesDFClass(unittest.TestCase):
-    @patch('app.StringIO')
-    @patch('app.pd')
-    def test_bytes_to_df_runs(self, mock_pd, mock_stringio):
-        bytes_to_df(b'some data here')
-        mock_stringio.assert_called_with('some data here')
-        mock_pd.read_csv.assert_called_with(mock_stringio('some data here'), header = None)
+    def test_new_bytes(self):
+        result = bytes_to_df(b'1,2\n2,1')
+        expectation = pd.DataFrame([[1,2], [2,1]])
+
+        pd.testing.assert_frame_equal(result, expectation)
 
 from app import check_task
 @patch('app.celery')
@@ -125,12 +124,14 @@ class TrainModelEndpointClass(unittest.TestCase):
 from app import predict
 class PredictClass(unittest.TestCase):
     @patch('app.r_conn')
-    def test_predict_nomodel(self, mock_conn):
+    @patch('app.check_model_status')
+    def test_predict_nomodel(self, mock_modelstatus, mock_conn):
         mock_conn.get.return_value = None
+        mock_modelstatus.return_value = "Model Doesn't Exist Flask response"
+        returned = predict('model_doesntexist')
 
-        predict('model_doesntexist')
-        #CHECK THIS LATER
         self.assertEqual(mock_conn.get.called, True)
+        self.assertEqual(returned, "Model Doesn't Exist Flask response")
 
     @patch('app.r_conn')
     @patch('app.pickle')
@@ -156,7 +157,35 @@ class PredictClass(unittest.TestCase):
         mock_pickle.loads.return_value.predict_proba.assert_called_with('processed_data_df')
 
 ######## Test Celery #####################################################
+from app import celery_train_model
+class CeleryTrainModelClass(unittest.TestCase):
+    @patch('app.pickle')
+    @patch('app.bytes_to_df')
+    @patch('app.redis')
+    def test_celery_train_success(self, mock_redis, mock_bytesdf, mock_pickle):
+        mock_pickle.dumps.return_value = 'model in pickle string'
+        mock_bytesdf.return_value = pd.DataFrame([[1,2], [2,1]])
+        mock_redis.Redis.return_value.set.return_value = True
 
+        result = celery_train_model('model_id', b'[[1,2], [2,1]]')
+        mock_bytesdf.assert_called_with(b'[[1,2], [2,1]]')
+        self.assertEqual(mock_pickle.dumps.called, True)
+        self.assertEqual(mock_redis.Redis.return_value.set.called, True)
+        self.assertDictEqual(result, {'status': 'complete', 'unique_id': 'model_id'})
+
+    @patch('app.pickle')
+    @patch('app.bytes_to_df')
+    @patch('app.redis')
+    def test_celery_train_fails(self, mock_redis, mock_bytesdf, mock_pickle):
+        mock_pickle.dumps.return_value = 'model in pickle string'
+        mock_bytesdf.return_value = pd.DataFrame([[1,2], [2,1]])
+        mock_redis.Redis.return_value.set.return_value = False
+
+        result = celery_train_model('model_id', b'[[1,2], [2,1]]')
+        mock_bytesdf.assert_called_with(b'[[1,2], [2,1]]')
+        self.assertEqual(mock_pickle.dumps.called, True)
+        self.assertEqual(mock_redis.Redis.return_value.set.called, True)
+        self.assertDictEqual(result, {'status': 'failed', 'unique_id': 'model_id'})
 
 ######## Functional App Tests ############################################
 import app

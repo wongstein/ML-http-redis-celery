@@ -8,7 +8,7 @@ def gen_model_unique_id():
     return 'model_' + datetime.now().strftime('%Y%m%d-%H%M%S')
 
 def gen_model_task_unique_id(model_id):
-    return model_id + "_taskid"
+    return model_id + "_task"
 
 def preprocess_data(data_x):
     return preprocessing.scale(data_x)
