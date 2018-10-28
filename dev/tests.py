@@ -200,7 +200,7 @@ class AppFunctionalClass(unittest.TestCase):
         mock_celery.AsyncResult.return_value.state = 'PENDING'
         response = self.client.get('check_task_status/test_task_id')
 
-        self.assertEqual(response.data.decode('utf-8'), 'PENDING')
+        self.assertEqual(response.data.decode('utf-8'), '{"status": "Training"}')
         self.assertEqual(response.status_code, 200)
 
     @patch('app.celery')
@@ -208,7 +208,7 @@ class AppFunctionalClass(unittest.TestCase):
         mock_celery.AsyncResult.return_value.result = 'Finished'
         response = self.client.get('check_task_status/test_task_id')
 
-        self.assertEqual(response.data.decode('utf-8'), 'Finished')
+        self.assertEqual(response.data.decode('utf-8'), '{"status": "Ready to Use"}')
         self.assertEqual(response.status_code, 200)
 
 
@@ -239,7 +239,7 @@ class AppFunctionalClass(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_trainmodelendpoint_415_baddata(self):
-        response = self.client.post('/train', content_type = 'not text', data = "['stuff']")
+        response = self.client.post('/models', content_type = 'not text', data = "['stuff']")
         self.assertEqual(response.status_code, 415)
         self.assertEqual(response.data.decode('utf-8'), 'Please post data in csv format, and make sure the label column is the last column in the csv.')
 
@@ -252,7 +252,7 @@ class AppFunctionalClass(unittest.TestCase):
         mock_genid.return_value = "model_id"
         mock_celery.send_task.return_value.id = 'task_id'
 
-        response = self.client.post('/train', content_type = 'text/csv', data = "good data")
+        response = self.client.post('/models', content_type = 'text/csv', data = "good data")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.decode('utf-8'), '{"message": "You\'re model is being trained right now, you can check it\'s status by hitting the check_task endpoint", "model_id": "model_id", "task_id": "task_id"}')
@@ -261,7 +261,7 @@ class AppFunctionalClass(unittest.TestCase):
     def test_predict_404(self, mock_conn):
         mock_conn.get.return_value = None
 
-        response = self.client.get('/predict/model_doesntexist')
+        response = self.client.get('/models/model_doesntexist')
 
         self.assertEqual(response.status_code, 404)
 
@@ -281,7 +281,7 @@ class AppFunctionalClass(unittest.TestCase):
         mock_pickle.loads.return_value.predict_proba.return_value.tolist.return_value = 'class probability predictions list'
 
 
-        response = self.client.get('/predict/model_exist', content_type = 'text/csv', data = b'good_data')
+        response = self.client.get('/models/model_exist', content_type = 'text/csv', data = b'good_data')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.decode('utf-8'), '{"predictions": "class predictions list", "prediction_probability": "class probability predictions list"}')
