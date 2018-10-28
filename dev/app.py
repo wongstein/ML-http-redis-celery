@@ -56,10 +56,12 @@ def celery_train_model(model_id, data):
 def check_task(task_id):
     res = celery.AsyncResult(task_id)
     if res.state == states.PENDING:
-        state = res.state
+        state = "Training"
     else:
-        state = str(res.result)
-    return flask.Response(response = state,
+        state = "Ready to Use"
+    to_return = {'status': state}
+
+    return flask.Response(response = json.dumps(to_return),
                           status = 200,
                           mimetype = 'text/plain')
 
@@ -79,7 +81,7 @@ def check_model_status(model_id):
                         mimetype = 'text/plain')
 
 
-@app.route('/train', methods = ['POST'])
+@app.route('/models', methods = ['POST'])
 def train_model_endpoint():
     data = get_request_data()
 
@@ -105,7 +107,7 @@ def train_model_endpoint():
 
 #expecting
 #added post to route for easy testing in PostMan
-@app.route('/predict/<string:model_id>', methods = ['GET', 'POST'])
+@app.route('/models/<string:model_id>', methods = ['GET'])
 def predict(model_id):
     #find model
     model_s = r_conn.get(model_id)
