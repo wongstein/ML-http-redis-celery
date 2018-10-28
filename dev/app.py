@@ -105,7 +105,7 @@ def train_model_endpoint():
 
 #expecting
 #added post to route for easy testing in PostMan
-@app.route('/predict/<string:model_id>', methods = ['GET'])
+@app.route('/predict/<string:model_id>', methods = ['GET', 'POST'])
 def predict(model_id):
     #find model
     model_s = r_conn.get(model_id)
@@ -149,7 +149,9 @@ def get_request_data():
     return 'Please post data in csv format.'
 
 def bytes_to_df(data_b):
-    data_s = StringIO(data_b.decode('utf-8'))
+    if type(data_b) == type(b'byte'):
+        data_b = data_b.decode('utf-8')
+    data_s = StringIO(data_b)
     data_df = pd.read_csv(data_s, header = None)
 
     return data_df
