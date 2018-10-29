@@ -51,12 +51,10 @@ def celery_train_model(model_id, data):
 
 ########### END POINTS #########################################################
 
-
-@app.route('/check_task_status/<string:task_id>')
 def check_task(task_id):
     res = celery.AsyncResult(task_id)
     if res.state == states.PENDING:
-        state = "Training"
+        state = "Model is Training"
     else:
         state = "Ready to Use"
     to_return = {'status': state}
@@ -97,7 +95,7 @@ def train_model_endpoint():
     model_task_key = gen_model_task_unique_id(model_id)
     r_conn.set(model_task_key, task.id)
 
-    response_message = "You're model is being trained right now, you can check it's status by hitting the check_task endpoint"
+    response_message = "You're model is being trained right now, you can check it's status by hitting the check_model_status endpoint"
     response = { 'message': response_message,
                  'model_id': model_id,
                  'task_id': task.id}
@@ -137,7 +135,7 @@ def predict(model_id):
         pass
 
     return flask.Response(response = json.dumps(to_return),
-                          status = 200,
+                          status = 202,
                           mimetype = 'text/plain')
 
 ################### Smaller Helper Functions with no Business Logic ########################
