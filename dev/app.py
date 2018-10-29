@@ -1,21 +1,53 @@
 import flask
 from flask import Flask, url_for
-from worker import celery
+from celery import Celery
 import celery.states as states
-import redis
 
-from io import StringIO
 import json
 
 import pickle
 import pandas as pd
-
-from helpers import gen_model_unique_id, gen_model_task_unique_id, preprocess_data, bytes_to_df
+from sklearn.linear_model import LogisticRegression
+from helpers import gen_model_unique_id, gen_model_task_unique_id, preprocess_data
+import redis
 
 app = Flask(__name__)
 
-r_conn = redis.Redis('redis')
+#celery configuration
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
+#initialize Celery
+celery = Celery(app.name, broker = app.config['CELERY_BROKER_URL'],
+                backend = app.config['CELERY_RESULT_BACKEND'])
+
+#Redis connection
+r_conn = redis.Redis('localhost')
+
+####################### CELERY TASKS ##############################################
+
+#Expecting data to come in byte-string
+@celery.task(name='tasks.train')
+def celery_train_model(model_id, data):
+    data_df = bytes_to_df(data)
+
+    target = data_df.iloc[:, -1]
+
+    train_data = preprocess_data(data_df.iloc[:, :-1])
+
+    #train_data = preprocess_data(train_data)
+    model = LogisticRegression(random_state=0, solver='lbfgs',multi_class='multinomial', max_iter = 500).fit(train_data, target)
+
+    pickled = pickle.dumps(model)
+
+    #CONNECTION
+    conn = redis.Redis('localhost')
+    if conn.set(model_id, pickled) == True:
+        return {'status': 'complete', 'unique_id': model_id}
+
+    return {'status': 'failed', 'unique_id': model_id}
+
+########### END POINTS #########################################################
 @app.route('/check_model_status/<string:model_id>')
 def check_model_status(model_id):
     model_task_id = gen_model_task_unique_id(model_id)
@@ -111,3 +143,15 @@ def get_request_data():
     if flask.request.method == 'POST': #training expects label in final column
         return 'Please post data in csv format, and make sure the label column is the last column in the csv.'
     return 'Please post data in csv format.'
+
+def bytes_to_df(data_b):
+    if type(data_b) == type(b'byte'):
+        data_b = data_b.decode('utf-8')
+    data_s = StringIO(data_b)
+    data_df = pd.read_csv(data_s, header = None)
+
+    return data_df
+
+if __name__ == '__main__':
+    app.run(debug = True)
+

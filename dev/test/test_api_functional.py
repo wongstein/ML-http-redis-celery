@@ -2,7 +2,7 @@ import unittest
 from mock import Mock, patch
 from freezegun import freeze_time
 import pandas as pd
-import app
+import app import app
 
 
 class AppFunctionalClass(unittest.TestCase):
