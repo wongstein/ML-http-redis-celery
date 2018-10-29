@@ -1,0 +1,45 @@
+version: "3"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    restart: always
+    ports:
+     - "5000:5000"
+    depends_on:
+      - redis
+    networks:
+      - webnet
+  worker:
+    build:
+      context: .
+      dockerfile: ./celery-queue/Dockerfile
+    depends_on:
+      - redis
+    networks:
+      - webnet
+  monitor:
+    build:
+      context: .
+      dockerfile: ./celery-queue/Dockerfile
+    ports:
+     - "5555:5555"
+    entrypoint: flower
+    command:  -A tasks --port=5555 --broker=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - webnet
+  redis:
+    image: redis:alpine
+    restart: always
+    expose:
+      - '6379'
+    ports:
+      - '6379:6379'
+    networks:
+      - webnet
+networks:
+  webnet:
+   driver: bridge
