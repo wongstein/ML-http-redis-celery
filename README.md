@@ -29,7 +29,7 @@ This api comes with a couple of endpoints that could be useful, and here they ar
   * 404 Model not found: "The model id you supplied either doesn't exist or the model_id provided is wrong."
 
 # Setting up Dev Environment
-If you'd like to run this locally, you can! First, create a new python virtual env using python 3.6.  Then ``` pip install requirements.txt``` to get all your dependencies installed.
+If you'd like to run this locally, you can! First, create a new python virtual env using python 3.6.  Then ``` pip install requirements.txt``` to get all your dependencies installed.  Then cd into the ml_api folder.
 
 ## starting redis
 ```redis-server /usr/local/etc/redis.conf```
@@ -44,7 +44,7 @@ check with ```redis-cli ping```.  If you get a "PONG" back, your redis is up and
 ```gunicorn  --bind 127.0.0.1:5000 --workers 1 app:app```
 
 # Running with Docker
-Docker makes it a little easier to run the full app environment anywhere.  If you want to run the app on Docker, make sure you have docker and docker compose installed.  Then run
+Docker makes it a little easier to run the full app environment anywhere.  If you want to run the app on Docker, cd into api_ml and make sure you have docker and docker compose installed.  Then run
 ```docker-compose up -d --build ```
 You'll be able to hit the endpoints at localhost:5000.
 
@@ -80,5 +80,5 @@ print(response.status_code)
 ```
 
 # Running Tests
-If you are in the dev folder, you can run:
+If you are in the ml_api folder, you can run:
 ``` python -m unittest discover ```
