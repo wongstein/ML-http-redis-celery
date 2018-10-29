@@ -36,7 +36,7 @@ If you'd like to run this locally, you can! First, create a new python virtual e
 check with ```redis-cli ping```.  If you get a "PONG" back, your redis is up and ready to go.
 
 ## starting a celery worker
-```celery worker -A worker.celery --loglevel=INFO```
+```celery -A tasks worker --loglevel=info```
 
 ## starting the flask server
 ``` python app.py```
@@ -54,11 +54,11 @@ You'll be able to hit the endpoints at localhost:5000.
 Set a post request to http://localhost:5000/models.  Set content-type in headers to 'text/csv'.  In the body, click on raw and set the data type to text.  You can copy and paste the csv input here.  Then push send and watch the magic.
 
 ## Making a request for predict not with postman
-Somehow, postman doesn't allow you to attach a body to a get request.  It's okay, you can do it programmatically in your favorite programmatic method.  If you have ```::1 localhost``` in your /etc/hosts file, then you can curl or programmatically hit localhost:5000.
+Somehow, postman doesn't allow you to attach a body to a get request.  It's okay, you can do it programmatically in your favorite programmatic method.  If you're running locally, you can hit the endpoints with localhost:5000.
 
-If not, it's okay, you can hit [::1]:5000.
+If you're running with docker, things can get a bit complicated.  If you have ```::1 localhost``` in your /etc/hosts file, then you can also curl or programmatically hit localhost:5000.  If not, it's okay, you can hit [::1]:5000.
 
-Here's an example of a python line which will send a get request to [::1]:5000
+Here's an example of a python line which will send a get request to [::1]:5000.
 ```
 import requests
 model = 'model_20181025-132027' #enter a model id here that you know exists
