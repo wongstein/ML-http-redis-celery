@@ -12,3 +12,11 @@ def gen_model_task_unique_id(model_id):
 
 def preprocess_data(data_x):
     return preprocessing.scale(data_x)
+
+def bytes_to_df(data_b):
+    if type(data_b) == type(b'byte'):
+        data_b = data_b.decode('utf-8')
+    data_s = StringIO(data_b)
+    data_df = pd.read_csv(data_s, header = None)
+
+    return data_df
