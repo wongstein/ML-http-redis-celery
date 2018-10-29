@@ -8,7 +8,7 @@ import json
 import pickle
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from helpers import gen_model_unique_id, gen_model_task_unique_id, preprocess_data
+from helpers import gen_model_unique_id, gen_model_task_unique_id, preprocess_data, bytes_to_df
 import redis
 
 app = Flask(__name__)
@@ -144,13 +144,6 @@ def get_request_data():
         return 'Please post data in csv format, and make sure the label column is the last column in the csv.'
     return 'Please post data in csv format.'
 
-def bytes_to_df(data_b):
-    if type(data_b) == type(b'byte'):
-        data_b = data_b.decode('utf-8')
-    data_s = StringIO(data_b)
-    data_df = pd.read_csv(data_s, header = None)
-
-    return data_df
 
 if __name__ == '__main__':
     app.run(debug = True)
