@@ -93,7 +93,7 @@ class TrainModelEndpointClass(unittest.TestCase):
         train_model_endpoint()
 
         self.assertEqual(mock_genid.called, True)
-        mock_celery.send_task.assert_called_with('tasks.train', args = ['model_id', b'good data'], kwargs = {})
+        mock_celery.send_task.assert_called_with('tasks.train', args = ['model_id', 'good data'], kwargs = {})
         mock_genmodeltaskid.assert_called_with("model_id")
         mock_conn.set.assert_called_with('model_task_id', 'task_id')
 

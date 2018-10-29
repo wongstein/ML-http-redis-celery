@@ -44,14 +44,14 @@ check with ```redis-cli ping```.  If you get a "PONG" back, your redis is up and
 # Using the API
 ## Sending a post request with postman (just an example)
 
-Set a post request to http://localhost:5000/train.  Set content-type in headers to equal 'text/csv'.  In the body, click on raw and set the data type to text.  You can copy and paste the csv input here.  Then push send and watch the magic.
+Set a post request to http://localhost:5000/models.  Set content-type in headers to 'text/csv'.  In the body, click on raw and set the data type to text.  You can copy and paste the csv input here.  Then push send and watch the magic.
 
 ## Making a get request for predict not with postman
 Somehow, postman doesn't allow you to attach a body to a get request.  It's okay, you can do it programmatically in your favorite programmatic method.  Here's an example of a python line which will send a get request
 ```
 import requests
 model = model_20181025-132027
-response = requests.get('http://localhost:5000/predict/%s' % (model), headers = {'Content-Type':'text/csv'}, data = '6.9,3.1,5.1,2.3')
+response = requests.get('http://localhost:5000/models/%s' % (model), headers = {'Content-Type':'text/csv'}, data = '6.9,3.1,5.1,2.3')
 print(response.content)
 print(response.status_code)
 ```

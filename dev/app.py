@@ -48,22 +48,7 @@ def celery_train_model(model_id, data):
 
     return {'status': 'failed', 'unique_id': model_id}
 
-
 ########### END POINTS #########################################################
-
-def check_task(task_id):
-    res = celery.AsyncResult(task_id)
-    if res.state == states.PENDING:
-        state = "Model is Training"
-    else:
-        state = "Ready to Use"
-    to_return = {'status': state}
-
-    return flask.Response(response = json.dumps(to_return),
-                          status = 200,
-                          mimetype = 'text/plain')
-
-
 @app.route('/check_model_status/<string:model_id>')
 def check_model_status(model_id):
     model_task_id = gen_model_task_unique_id(model_id)
@@ -89,7 +74,7 @@ def train_model_endpoint():
                               mimetype = 'text/plain')
 
     model_id = gen_model_unique_id()
-    task = celery.send_task('tasks.train', args = [model_id, data], kwargs={})
+    task = celery.send_task('tasks.train', args = [model_id, data.decode('utf-8')], kwargs={})
 
     #save task id to model id
     model_task_key = gen_model_task_unique_id(model_id)
@@ -139,6 +124,18 @@ def predict(model_id):
                           mimetype = 'text/plain')
 
 ################### Smaller Helper Functions with no Business Logic ########################
+
+def check_task(task_id):
+    res = celery.AsyncResult(task_id)
+    if res.state == states.PENDING:
+        state = "Model is Training"
+    else:
+        state = "Ready to Use"
+    to_return = {'status': state}
+
+    return flask.Response(response = json.dumps(to_return),
+                          status = 200,
+                          mimetype = 'text/plain')
 
 def get_request_data():
     if flask.request.content_type == 'text/csv':
