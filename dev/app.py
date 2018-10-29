@@ -3,7 +3,6 @@ from flask import Flask, url_for
 from celery import Celery
 import celery.states as states
 
-from io import StringIO
 import json
 
 import pickle
