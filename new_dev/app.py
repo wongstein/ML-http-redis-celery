@@ -14,7 +14,12 @@ from helpers import gen_model_unique_id, gen_model_task_unique_id, preprocess_da
 
 app = Flask(__name__)
 
-r_conn = redis.Redis('redis')
+try:
+    r_conn = redis.Redis('redis')
+    r_conn.get('test')
+except redis.exceptions.ConnectionError:
+    # this is a localrun
+    r_conn = redis.Redis('localhost')
 
 @app.route('/check_model_status/<string:model_id>')
 def check_model_status(model_id):

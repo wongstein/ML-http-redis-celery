@@ -24,6 +24,9 @@ ENV DEBUG true
 
 COPY ./api /api
 COPY helpers.py /api/helpers.py
+COPY worker.py /api/worker.py
+COPY app.py /api/app.py
+
 WORKDIR /api
 
 # install requirements

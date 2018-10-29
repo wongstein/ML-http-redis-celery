@@ -29,17 +29,19 @@ This api comes with a couple of endpoints that could be useful, and here they ar
   * 404 Model not found: "The model id you supplied either doesn't exist or the model_id provided is wrong."
 
 # Setting up Dev Environment
-First, create a new python virtual env using python 3.6.  Then ``` pip install requirements.txt``` to get all your dependencies installed.
+If you'd like to run this locally, you can! First, create a new python virtual env using python 3.6.  Then ``` pip install requirements.txt``` to get all your dependencies installed.
 
 ## starting redis
 ```redis-server /usr/local/etc/redis.conf```
 check with ```redis-cli ping```.  If you get a "PONG" back, your redis is up and ready to go.
 
 ## starting a celery worker
-```celery worker -A app.celery --loglevel=INFO```
+```celery worker -A worker.celery --loglevel=INFO```
 
 ## starting the flask server
 ``` python app.py```
+
+```gunicorn  --bind 127.0.0.1:5000 --workers 1 app:app```
 
 # Running with Docker
 Docker makes it a little easier to run the full app environment anywhere.  If you want to run the app on Docker, make sure you have docker and docker compose installed.  Then run
@@ -52,11 +54,15 @@ You'll be able to hit the endpoints at localhost:5000.
 Set a post request to http://localhost:5000/models.  Set content-type in headers to 'text/csv'.  In the body, click on raw and set the data type to text.  You can copy and paste the csv input here.  Then push send and watch the magic.
 
 ## Making a request for predict not with postman
-Somehow, postman doesn't allow you to attach a body to a get request.  It's okay, you can do it programmatically in your favorite programmatic method.  Here's an example of a python line which will send a get request
+Somehow, postman doesn't allow you to attach a body to a get request.  It's okay, you can do it programmatically in your favorite programmatic method.  If you have ```::1 localhost``` in your /etc/hosts file, then you can curl or programmatically hit localhost:5000.
+
+If not, it's okay, you can hit [::1]:5000.
+
+Here's an example of a python line which will send a get request to [::1]:5000
 ```
 import requests
-model = model_20181025-132027
-response = requests.get('http://localhost:5000/models/%s' % (model), headers = {'Content-Type':'text/csv'}, data = '6.9,3.1,5.1,2.3')
+model = 'model_20181025-132027' #enter a model id here that you know exists
+response = requests.get('http://[::1]:5000/models/%s' % (model), headers = {'Content-Type':'text/csv'}, data = '6.9,3.1,5.1,2.3')
 print(response.content)
 print(response.status_code)
 ```

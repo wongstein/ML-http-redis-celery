@@ -21,6 +21,8 @@ ENV C_FORCE_ROOT true
 
 COPY ./celery-queue /queue
 COPY helpers.py /queue/helpers.py
+COPY tasks.py /queue/tasks.py
+
 WORKDIR /queue
 
 RUN pip install -r requirements.txt

@@ -9,12 +9,16 @@ services:
      - "5000:5000"
     depends_on:
       - redis
+    networks:
+      - webnet
   worker:
     build:
       context: .
       dockerfile: ./celery-queue/Dockerfile
     depends_on:
       - redis
+    networks:
+      - webnet
   monitor:
     build:
       context: .
@@ -25,6 +29,8 @@ services:
     command:  -A tasks --port=5555 --broker=redis://redis:6379/0
     depends_on:
       - redis
+    networks:
+      - webnet
   redis:
     image: redis:alpine
     restart: always
@@ -32,3 +38,8 @@ services:
       - '6379'
     ports:
       - '6379:6379'
+    networks:
+      - webnet
+networks:
+  webnet:
+   driver: bridge

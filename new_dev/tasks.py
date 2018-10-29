@@ -12,7 +12,13 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localho
 
 celery = Celery('tasks', broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 
-r_conn = redis.Redis('redis')
+try:
+    r_conn = redis.Redis('redis')
+    r_conn.get('test')
+except redis.exceptions.ConnectionError:
+    # this is a localrun
+    r_conn = redis.Redis('localhost')
+
 
 @celery.task(name='tasks.train')
 def celery_train_model(model_id, data):
